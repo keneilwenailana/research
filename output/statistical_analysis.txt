@@ -1,14 +1,14 @@
 CHI-SQUARE INDEPENDENCE TESTS
 =============================
 Type of entity vs Lending Facilities:
-Chi-square statistic: 0.0000
-p-value: 1.0000
+Chi-square statistic: 0.0053
+p-value: 0.9420
 
 LENDING FACILITIES SUMMARY
 ==========================
-Total Entities: 15
+Total Entities: 16
 Entities with Lending Facilities: 5
-Percentage with Lending Facilities: 33.33%
+Percentage with Lending Facilities: 31.25%
 
 FEATURE STATISTICS BY LENDING FACILITIES
 =======================================
@@ -24,9 +24,9 @@ min      2.500000e+05
 max      2.500000e+06
 
 Without Lending Facilities:
-count    1.000000e+01
-mean     6.500000e+05
-std      3.944053e+05
+count    1.100000e+01
+mean     6.136364e+05
+std      3.931227e+05
 min      2.500000e+05
 25%      2.500000e+05
 50%      7.500000e+05
@@ -45,13 +45,13 @@ min        5.000000
 max      150.000000
 
 Without Lending Facilities:
-count      7.000000
-mean      59.285714
-std       66.484871
+count      8.000000
+mean      52.500000
+std       64.475909
 min        5.000000
-25%       10.000000
+25%        5.000000
 50%       15.000000
-75%      112.500000
+75%       93.750000
 max      150.000000
 
 Total Diversity Statistics:
@@ -66,12 +66,12 @@ min      1.000000
 max      6.000000
 
 Without Lending Facilities:
-count    10.000000
-mean      5.200000
-std       3.425395
+count    11.000000
+mean      5.545455
+std       3.445682
 min       1.000000
 25%       3.000000
-50%       4.500000
-75%       6.750000
+50%       6.000000
+75%       7.000000
 max      13.000000
 

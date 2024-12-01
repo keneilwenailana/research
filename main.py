@@ -4,15 +4,16 @@ import seaborn as sns
 import numpy as np
 import os
 
-# Create output directory if it doesn't exist
+# Create output directories if they don't exist
 os.makedirs('output', exist_ok=True)
+os.makedirs('output_images', exist_ok=True)
 
 # Read the CSV file
 def load_data(file_path):
     """
     Load and preprocess the data with more detailed feature engineering
     """
-    # Read the CSV file
+    # [Previous load_data function remains exactly the same]
     df = pd.read_csv(file_path)
 
     # Clean column names
@@ -70,124 +71,166 @@ def load_data(file_path):
 
     return df
 
-def create_comprehensive_visualizations(df):
+def create_and_save_visualization(df, plot_function, filename, title, figsize=(10, 6)):
     """
-    Create a comprehensive set of visualizations
+    Helper function to create and save individual visualizations
     """
-    # Set up the plot style
-
-    # Create multiple figure layouts
-    fig, axes = plt.subplots(3, 3, figsize=(20, 20))
-    fig.suptitle('Comprehensive Agricultural Lending Facilities Analysis', fontsize=16)
-
-    # 1. Pie Chart: Lending Facilities Distribution
-    lending_dist = df['Has Lending Facilities'].value_counts()
-    axes[0, 0].pie(lending_dist, labels=['No Lending', 'Has Lending'],
-                   autopct='%1.1f%%', colors=['#FF9999', '#66B2FF'])
-    axes[0, 0].set_title('Lending Facilities Distribution')
-
-    # 2. Bar Plot: Lending Facilities by Entity Size
-    lending_by_size = df.groupby('Entity Size')['Has Lending Facilities'].mean() * 100
-    lending_by_size.plot(kind='bar', ax=axes[0, 1], color='#66B2FF')
-    axes[0, 1].set_title('Lending Facilities by Entity Size')
-    axes[0, 1].set_xlabel('Entity Size')
-    axes[0, 1].set_ylabel('% with Lending Facilities')
-
-    # 3. Bar Plot: Lending Facilities by Province
-    lending_by_province = df.groupby('Province')['Has Lending Facilities'].mean() * 100
-    lending_by_province.plot(kind='bar', ax=axes[0, 2], color='#66B2FF')
-    axes[0, 2].set_title('Lending Facilities by Province')
-    axes[0, 2].set_xlabel('Province')
-    axes[0, 2].set_ylabel('% with Lending Facilities')
-    plt.setp(axes[0, 2].get_xticklabels(), rotation=45, ha='right')
-
-    # 4. Scatter Plot: Land Size vs Annual Turnover
-    sns.scatterplot(data=df, x='Land Size Numeric', y='Annual Turnover Numeric',
-                    hue='Has Lending Facilities', ax=axes[1, 0])
-    axes[1, 0].set_title('Land Size vs Annual Turnover')
-    axes[1, 0].set_xlabel('Land Size (Hectares)')
-    axes[1, 0].set_ylabel('Annual Turnover')
-
-    # 5. Box Plot: Total Diversity and Lending Facilities
-    sns.boxplot(data=df, x='Has Lending Facilities', y='Total Diversity', ax=axes[1, 1])
-    axes[1, 1].set_title('Diversity vs Lending Facilities')
-    axes[1, 1].set_xlabel('Has Lending Facilities')
-    axes[1, 1].set_ylabel('Total Diversity')
-
-    # 6. Pie Chart: Bank Distribution
-    bank_dist = df['Bank'].value_counts()
-    axes[1, 2].pie(bank_dist, labels=bank_dist.index, autopct='%1.1f%%')
-    axes[1, 2].set_title('Bank Distribution')
-
-    # 7. Correlation Heatmap
-    correlation_columns = ['Annual Turnover Numeric', 'Land Size Numeric',
-                           'Livestock Diversity', 'Grain Diversity',
-                           'Vegetable Diversity', 'Total Diversity']
-    correlation_df = df[correlation_columns].corr()
-    sns.heatmap(correlation_df, annot=True, cmap='coolwarm', ax=axes[2, 0])
-    axes[2, 0].set_title('Correlation Matrix')
-
-    # 8. Bar Plot: Lending Facilities by Land Ownership
-    lending_by_ownership = df.groupby('Land Ownership')['Has Lending Facilities'].mean() * 100
-    lending_by_ownership.plot(kind='bar', ax=axes[2, 1], color='#66B2FF')
-    axes[2, 1].set_title('Lending Facilities by Land Ownership')
-    axes[2, 1].set_xlabel('Land Ownership')
-    axes[2, 1].set_ylabel('% with Lending Facilities')
-
-    # 9. Pie Chart: Entity Type Distribution
-    entity_type_dist = df['Type of entity'].value_counts()
-    axes[2, 2].pie(entity_type_dist, labels=entity_type_dist.index, autopct='%1.1f%%')
-    axes[2, 2].set_title('Entity Type Distribution')
-
-    # Adjust layout and save
-    plt.tight_layout(rect=[0, 0.03, 1, 0.95])
-    plt.savefig('output/comprehensive_lending_analysis.png')
+    plt.figure(figsize=figsize)
+    plot_function(df)
+    plt.title(title)
+    plt.tight_layout()
+    plt.savefig(f'output_images/{filename}.png')
     plt.close()
 
-    # Additional Detailed Analysis
-    def detailed_statistical_summary():
-        with open('output/detailed_analysis.txt', 'w') as f:
-            # Lending Facilities Summary
-            f.write("LENDING FACILITIES SUMMARY\n")
-            f.write("==========================\n")
-            f.write(f"Total Entities: {len(df)}\n")
-            f.write(f"Entities with Lending Facilities: {df['Has Lending Facilities'].sum()}\n")
-            f.write(f"Percentage with Lending Facilities: {df['Has Lending Facilities'].mean()*100:.2f}%\n\n")
+def create_separate_visualizations(df):
+    """
+    Create and save individual visualizations
+    """
+    # 1. Lending Facilities Distribution (Pie Chart)
+    def plot_lending_dist(df):
+        lending_dist = df['Has Lending Facilities'].value_counts()
+        plt.pie(lending_dist, labels=['No Lending', 'Has Lending'],
+               autopct='%1.1f%%', colors=['#FF9999', '#66B2FF'])
 
-            # Statistical Tests
-            from scipy import stats
+    create_and_save_visualization(df, plot_lending_dist,
+                                'lending_distribution',
+                                'Lending Facilities Distribution')
 
-            # Chi-square test for independence
-            contingency_size = pd.crosstab(df['Entity Size'], df['Has Lending Facilities'])
-            chi2_size, p_size = stats.chi2_contingency(contingency_size)[:2]
-            f.write("CHI-SQUARE TESTS\n")
-            f.write("================\n")
-            f.write(f"Entity Size vs Lending Facilities:\n")
-            f.write(f"Chi-square statistic: {chi2_size:.4f}\n")
-            f.write(f"p-value: {p_size:.4f}\n\n")
+    # 2. Lending Facilities by Entity Size (Bar Plot)
+    def plot_lending_by_size(df):
+        lending_by_size = df.groupby('Entity Size')['Has Lending Facilities'].mean() * 100
+        lending_by_size.plot(kind='bar', color='#66B2FF')
+        plt.xlabel('Entity Size')
+        plt.ylabel('% with Lending Facilities')
 
-            # Similar tests for other categorical variables
-            categorical_vars = ['Land Ownership', 'Province', 'Type of entity']
-            for var in categorical_vars:
-                contingency = pd.crosstab(df[var], df['Has Lending Facilities'])
-                chi2, p = stats.chi2_contingency(contingency)[:2]
-                f.write(f"{var} vs Lending Facilities:\n")
-                f.write(f"Chi-square statistic: {chi2:.4f}\n")
-                f.write(f"p-value: {p:.4f}\n\n")
+    create_and_save_visualization(df, plot_lending_by_size,
+                                'lending_by_size',
+                                'Lending Facilities by Entity Size')
 
-    detailed_statistical_summary()
+    # 3. Lending Facilities by Province (Bar Plot)
+    def plot_lending_by_province(df):
+        lending_by_province = df.groupby('Province')['Has Lending Facilities'].mean() * 100
+        lending_by_province.plot(kind='bar', color='#66B2FF')
+        plt.xlabel('Province')
+        plt.ylabel('% with Lending Facilities')
+        plt.xticks(rotation=45, ha='right')
+
+    create_and_save_visualization(df, plot_lending_by_province,
+                                'lending_by_province',
+                                'Lending Facilities by Province')
+
+    # 4. Land Size vs Annual Turnover (Scatter Plot)
+    def plot_land_vs_turnover(df):
+        sns.scatterplot(data=df, x='Land Size Numeric', y='Annual Turnover Numeric',
+                       hue='Has Lending Facilities')
+        plt.xlabel('Land Size (Hectares)')
+        plt.ylabel('Annual Turnover')
+
+    create_and_save_visualization(df, plot_land_vs_turnover,
+                                'land_size_vs_turnover',
+                                'Land Size vs Annual Turnover')
+
+    # 5. Diversity vs Lending Facilities (Box Plot)
+    def plot_diversity_lending(df):
+        sns.boxplot(data=df, x='Has Lending Facilities', y='Total Diversity')
+        plt.xlabel('Has Lending Facilities')
+        plt.ylabel('Total Diversity')
+
+    create_and_save_visualization(df, plot_diversity_lending,
+                                'diversity_vs_lending',
+                                'Diversity vs Lending Facilities')
+
+    # 6. Bank Distribution (Pie Chart)
+    def plot_bank_dist(df):
+        bank_dist = df['Bank'].value_counts()
+        plt.pie(bank_dist, labels=bank_dist.index, autopct='%1.1f%%')
+
+    create_and_save_visualization(df, plot_bank_dist,
+                                'bank_distribution',
+                                'Bank Distribution')
+
+    # 7. Correlation Matrix (Heatmap)
+    def plot_correlation(df):
+        correlation_columns = ['Annual Turnover Numeric', 'Land Size Numeric',
+                             'Livestock Diversity', 'Grain Diversity',
+                             'Vegetable Diversity', 'Total Diversity']
+        correlation_df = df[correlation_columns].corr()
+        sns.heatmap(correlation_df, annot=True, cmap='coolwarm')
+
+    create_and_save_visualization(df, plot_correlation,
+                                'correlation_matrix',
+                                'Correlation Matrix',
+                                figsize=(12, 8))
+
+    # 8. Lending Facilities by Land Ownership (Bar Plot)
+    def plot_lending_by_ownership(df):
+        lending_by_ownership = df.groupby('Land Ownership')['Has Lending Facilities'].mean() * 100
+        lending_by_ownership.plot(kind='bar', color='#66B2FF')
+        plt.xlabel('Land Ownership')
+        plt.ylabel('% with Lending Facilities')
+
+    create_and_save_visualization(df, plot_lending_by_ownership,
+                                'lending_by_ownership',
+                                'Lending Facilities by Land Ownership')
+
+    # 9. Entity Type Distribution (Pie Chart)
+    def plot_entity_type(df):
+        entity_type_dist = df['Type of entity'].value_counts()
+        plt.pie(entity_type_dist, labels=entity_type_dist.index, autopct='%1.1f%%')
+
+    create_and_save_visualization(df, plot_entity_type,
+                                'entity_type_distribution',
+                                'Entity Type Distribution')
 
 def main():
     # Load data
     df = load_data('data.csv')
 
-    # Create comprehensive visualizations
-    create_comprehensive_visualizations(df)
+    # Create separate visualizations
+    create_separate_visualizations(df)
 
-    print("Analysis complete. Please check the 'output' directory for results.")
-    print("Files generated:")
-    print("1. comprehensive_lending_analysis.png - Comprehensive visualizations")
-    print("2. detailed_analysis.txt - Statistical summary and tests")
+    # Create detailed statistical summary
+    with open('output/detailed_analysis.txt', 'w') as f:
+        # [Previous statistical analysis code remains the same]
+        f.write("LENDING FACILITIES SUMMARY\n")
+        f.write("==========================\n")
+        f.write(f"Total Entities: {len(df)}\n")
+        f.write(f"Entities with Lending Facilities: {df['Has Lending Facilities'].sum()}\n")
+        f.write(f"Percentage with Lending Facilities: {df['Has Lending Facilities'].mean()*100:.2f}%\n\n")
+
+        from scipy import stats
+
+        # Chi-square tests
+        contingency_size = pd.crosstab(df['Entity Size'], df['Has Lending Facilities'])
+        chi2_size, p_size = stats.chi2_contingency(contingency_size)[:2]
+        f.write("CHI-SQUARE TESTS\n")
+        f.write("================\n")
+        f.write(f"Entity Size vs Lending Facilities:\n")
+        f.write(f"Chi-square statistic: {chi2_size:.4f}\n")
+        f.write(f"p-value: {p_size:.4f}\n\n")
+
+        categorical_vars = ['Land Ownership', 'Province', 'Type of entity']
+        for var in categorical_vars:
+            contingency = pd.crosstab(df[var], df['Has Lending Facilities'])
+            chi2, p = stats.chi2_contingency(contingency)[:2]
+            f.write(f"{var} vs Lending Facilities:\n")
+            f.write(f"Chi-square statistic: {chi2:.4f}\n")
+            f.write(f"p-value: {p:.4f}\n\n")
+
+    print("Analysis complete. Please check the 'output_images' directory for individual visualizations")
+    print("and the 'output' directory for the statistical analysis.")
+    print("\nFiles generated:")
+    print("1. output_images/")
+    print("   - lending_distribution.png")
+    print("   - lending_by_size.png")
+    print("   - lending_by_province.png")
+    print("   - land_size_vs_turnover.png")
+    print("   - diversity_vs_lending.png")
+    print("   - bank_distribution.png")
+    print("   - correlation_matrix.png")
+    print("   - lending_by_ownership.png")
+    print("   - entity_type_distribution.png")
+    print("2. output/detailed_analysis.txt")
 
 if __name__ == '__main__':
     main()

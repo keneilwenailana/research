@@ -1,24 +1,24 @@
 LENDING FACILITIES SUMMARY
 ==========================
-Total Entities: 15
+Total Entities: 16
 Entities with Lending Facilities: 5
-Percentage with Lending Facilities: 33.33%
+Percentage with Lending Facilities: 31.25%
 
 CHI-SQUARE TESTS
 ================
 Entity Size vs Lending Facilities:
-Chi-square statistic: 2.4000
-p-value: 0.3012
+Chi-square statistic: 2.8121
+p-value: 0.2451
 
 Land Ownership vs Lending Facilities:
-Chi-square statistic: 0.0429
-p-value: 0.8360
+Chi-square statistic: 0.0023
+p-value: 0.9621
 
 Province vs Lending Facilities:
-Chi-square statistic: 5.2500
-p-value: 0.0724
+Chi-square statistic: 4.3636
+p-value: 0.1128
 
 Type of entity vs Lending Facilities:
-Chi-square statistic: 0.0000
-p-value: 1.0000
+Chi-square statistic: 0.0053
+p-value: 0.9420
 

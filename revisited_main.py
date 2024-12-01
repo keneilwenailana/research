@@ -2,12 +2,12 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 import numpy as np
-import os
 from scipy import stats
-from sklearn.preprocessing import LabelEncoder
-
-# Create output directory if it doesn't exist
-os.makedirs('output', exist_ok=True)
+from sklearn.preprocessing import LabelEncoder, StandardScaler
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.linear_model import LogisticRegression
+from sklearn.model_selection import train_test_split
+import os
 
 def load_and_preprocess_data(file_path):
     """
@@ -23,6 +23,12 @@ def load_and_preprocess_data(file_path):
     df['Has Lending Facilities'] = df['Does the entity have any lending facilities with a financial institution'].map({
         'Yes': True,
         'No': False
+    })
+
+    # Water rights
+    df['Has water rights'] = df['Does the entity have water rights?'].map({
+        'Yes':True,
+        'No':False
     })
 
     # Numeric Encoding
@@ -61,13 +67,8 @@ def load_and_preprocess_data(file_path):
 
     return df
 
-def create_advanced_visualizations(df):
-    """
-    Create advanced visualizations to explore lending facilities
-    """
-    plt.figure(figsize=(20, 15))
-
-    # 1. Correlation Heatmap with Lending Facilities
+def create_correlation_heatmap(df, output_path='revisited_images/correlation_heatmap.png'):
+    """Creates and saves a correlation heatmap."""
     correlation_columns = [
         'Has Lending Facilities',
         'Annual Turnover Numeric',
@@ -79,22 +80,20 @@ def create_advanced_visualizations(df):
         'Land Ownership Encoded',
         'Province Encoded',
         'Entity Type Encoded',
-        'Bank Encoded'
+        'Bank Encoded',
+        'Has water rights'
     ]
 
-    # Compute correlation matrix
+    plt.figure(figsize=(12, 10))
     correlation_matrix = df[correlation_columns].corr()
-
-    plt.subplot(2, 2, 1)
     sns.heatmap(correlation_matrix, annot=True, cmap='coolwarm', center=0)
     plt.title('Correlation Heatmap with Lending Facilities')
     plt.tight_layout()
+    plt.savefig(output_path)
+    plt.close()
 
-    # 2. Feature Importance for Lending Facilities
-    from sklearn.ensemble import RandomForestClassifier
-    from sklearn.preprocessing import StandardScaler
-
-    # Prepare features for importance analysis
+def create_feature_importance_plot(df, output_path='revisited_images/feature_importance.png'):
+    """Creates and saves a feature importance plot."""
     features = [
         'Annual Turnover Numeric',
         'Land Size Numeric',
@@ -106,113 +105,94 @@ def create_advanced_visualizations(df):
         'Entity Type Encoded'
     ]
 
-    # Prepare X and y
     X = df[features]
     y = df['Has Lending Facilities']
 
-    # clean
-    merged = pd.concat([X, y], axis=1)
-    merged = merged.dropna()
-    X = merged.iloc[:, :X.shape[1]]  # separate X rows and columns
+    merged = pd.concat([X, y], axis=1).dropna()
+    X = merged.iloc[:, :X.shape[1]]
     y = merged.iloc[:, X.shape[1]:]
 
-    # Scale features
     scaler = StandardScaler()
     X_scaled = scaler.fit_transform(X)
 
-    # Random Forest for feature importance
     rf = RandomForestClassifier(n_estimators=100, random_state=42)
     rf.fit(X_scaled, y)
 
-    # Plot feature importances
-    plt.subplot(2, 2, 2)
+    plt.figure(figsize=(10, 6))
     feature_importance = pd.Series(rf.feature_importances_, index=features)
     feature_importance.sort_values(ascending=True).plot(kind='barh')
     plt.title('Feature Importance for Lending Facilities')
     plt.xlabel('Importance Score')
+    plt.tight_layout()
+    plt.savefig(output_path)
+    plt.close()
 
-    # 3. Logistic Regression Coefficients
-    from sklearn.linear_model import LogisticRegression
-    from sklearn.model_selection import train_test_split
+def create_logistic_regression_plot(df, output_path='revisited_images/logistic_regression.png'):
+    """Creates and saves a logistic regression coefficients plot."""
+    features = [
+        'Annual Turnover Numeric',
+        'Land Size Numeric',
+        'Livestock Diversity',
+        'Grain Diversity',
+        'Vegetable Diversity',
+        'Land Ownership Encoded',
+        'Province Encoded',
+        'Entity Type Encoded'
+    ]
 
-    # Split the data
+    X = df[features]
+    y = df['Has Lending Facilities']
+
+    merged = pd.concat([X, y], axis=1).dropna()
+    X = merged.iloc[:, :X.shape[1]]
+    y = merged.iloc[:, X.shape[1]:]
+
+    scaler = StandardScaler()
+    X_scaled = scaler.fit_transform(X)
+
     X_train, X_test, y_train, y_test = train_test_split(X_scaled, y, test_size=0.2, random_state=42)
-
-    # Logistic Regression
     lr = LogisticRegression(random_state=42)
     lr.fit(X_train, y_train)
 
-    # Plot logistic regression coefficients
-    plt.subplot(2, 2, 3)
+    plt.figure(figsize=(10, 6))
     coef_series = pd.Series(lr.coef_[0], index=features)
     coef_series.sort_values(ascending=True).plot(kind='barh')
     plt.title('Logistic Regression Coefficients')
     plt.xlabel('Coefficient Value')
+    plt.tight_layout()
+    plt.savefig(output_path)
+    plt.close()
 
-    # 4. Detailed Lending Facilities Distribution
-    plt.subplot(2, 2, 4)
-    print(df)
+def create_entity_type_distribution(df, output_path='revisited_images/entity_type_distribution.png'):
+    """Creates and saves an entity type distribution plot."""
+    plt.figure(figsize=(10, 6))
     df.groupby('Entity Type Encoded')['Has Lending Facilities'].mean().plot(kind='bar')
     plt.title('Lending Facilities by Entity Type')
     plt.xlabel('Entity Type')
     plt.ylabel('Proportion with Lending Facilities')
     plt.xticks(rotation=45, ha='right')
-
-    # Save the figure
     plt.tight_layout()
-    plt.savefig('output/lending_facilities_analysis.png')
+    plt.savefig(output_path)
     plt.close()
 
-    # Detailed Statistical Analysis
-    with open('output/statistical_analysis.txt', 'w') as f:
-        # Chi-square tests
-        categorical_vars = ['Land Ownership', 'Province', 'Type of entity']
-        f.write("CHI-SQUARE INDEPENDENCE TESTS\n")
-        f.write("=============================\n")
-        for var in categorical_vars:
-            try:
-                contingency = pd.crosstab(df[var], df['Has Lending Facilities'])
-                chi2, p_value = stats.chi2_contingency(contingency)[:2]
-                f.write(f"{var} vs Lending Facilities:\n")
-                f.write(f"Chi-square statistic: {chi2:.4f}\n")
-                f.write(f"p-value: {p_value:.4f}\n\n")
-            except:
-                pass
-
-        # Detailed lending facilities summary
-        f.write("LENDING FACILITIES SUMMARY\n")
-        f.write("==========================\n")
-        f.write(f"Total Entities: {len(df)}\n")
-        f.write(f"Entities with Lending Facilities: {df['Has Lending Facilities'].sum()}\n")
-        f.write(f"Percentage with Lending Facilities: {df['Has Lending Facilities'].mean()*100:.2f}%\n\n")
-
-        # Detailed feature statistics
-        f.write("FEATURE STATISTICS BY LENDING FACILITIES\n")
-        f.write("=======================================\n")
-        numeric_features = [
-            'Annual Turnover Numeric',
-            'Land Size Numeric',
-            'Total Diversity'
-        ]
-        for feature in numeric_features:
-            f.write(f"{feature} Statistics:\n")
-            f.write("With Lending Facilities:\n")
-            f.write(df[df['Has Lending Facilities']][feature].describe().to_string())
-            f.write("\n\nWithout Lending Facilities:\n")
-            f.write(df[~df['Has Lending Facilities']][feature].describe().to_string())
-            f.write("\n\n")
-
 def main():
-    # Load data
+    # Create output directory
+    os.makedirs('revisited_images', exist_ok=True)
+
+    # Load and preprocess data (using your existing load_and_preprocess_data function)
     df = load_and_preprocess_data('data.csv')
 
-    # Create advanced visualizations
-    create_advanced_visualizations(df)
+    # Create individual visualizations
+    create_correlation_heatmap(df)
+    create_feature_importance_plot(df)
+    create_logistic_regression_plot(df)
+    create_entity_type_distribution(df)
 
-    print("Analysis complete. Please check the 'output' directory for results.")
-    print("Files generated:")
-    print("1. lending_facilities_analysis.png - Comprehensive analysis visualizations")
-    print("2. statistical_analysis.txt - Detailed statistical analysis")
+    print("Visualizations have been saved in the 'revisited_images' folder:")
+    print("1. correlation_heatmap.png")
+    print("2. feature_importance.png")
+    print("3. logistic_regression.png")
+    print("4. entity_type_distribution.png")
 
 if __name__ == '__main__':
     main()
